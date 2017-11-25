@@ -1,20 +1,15 @@
 %% Bow-Tie Structure, E-DrawDowns & Vulnerability in the World Stock-Market Network %%
 
-% Revisar datos.
-% Revisar cuidadosamente procedimiento.
-% Revisar si una ventana de 10 es correcta.
-% Incluir posibilidad de tener en cuenta fines de semana y festivos.
-
 %% Input Lecture: %%
 
-cd('C:\Users\Jairo F Gudiño R\Desktop\Stock Network Research')
+cd('E:\Stock Network')
 [~,~,Database]=xlsread('MSCI Index.xlsx','Data');
 %% Inputs and Parameters Definition: %%
 Countries=Database(4,2:end);
 Dates=Database(3538:end,1);
 Database=cell2mat(Database(3538:end,2:end));
 
-DaysWindow = 20;
+DaysWindow = 100;
 Days = size(Database,1);
 CountriesNum=length(Countries);
 n=4;
@@ -128,8 +123,9 @@ end
 % Interdependence Matrix and Trend Reinforcement Index %
 
 FinalMatrix = (CountsX2+CountsX3+CountsX4)/3;
+% FinalMatrix = (CountsX3);
 TrendReinforcement=FinalMatrix(logical(eye(size(FinalMatrix))));
-FinalMatrix(logical(eye(size(FirstMatrix)))) = 0;
+FinalMatrix(logical(eye(size(FinalMatrix)))) = 0;
 
 % Final Analysis: %
 
@@ -146,7 +142,7 @@ Receptors=array2table(sort(OutDegree)','RowNames',(Countries(Order'))');
 % Net: %
 [~,Order]=sort(sum(FinalMatrix,2)-(sum(FinalMatrix,1))');
 Net=array2table(sort(sum(FinalMatrix,2)-(sum(FinalMatrix,1))'),'RowNames',(Countries(Order))');
-
+NetDegree=(sum(FinalMatrix,2)-(sum(FinalMatrix,1))');
 % Trend Reinforcement Index: %
 [~,Order]=sort(TrendReinforcement);
 TrendReinforceH=array2table(sort(TrendReinforcement),'RowNames',(Countries(Order'))');
@@ -161,6 +157,15 @@ x=array2table(sum(x,2),'RowNames',Dates);
 DrawDowns=table2array(DrawDowns);
 
 clear Order;
+
+save CountsX1
+save CountsX2
+save CountsX3
+save CountsX4
+save CountsX5
+save FinalMatrix
+save DrawDowns
+
 %% Impacting and Impacted Centrality %%
 
 [r,c,v] = find(FinalMatrix);
@@ -171,9 +176,9 @@ G.Nodes.Name=Countries';
 % plot(G)
 
 % PageRank Algorithm %
-pg_ranks = centrality(G,'pagerank');
-[~,Order]=sort(pg_ranks);
-PageRankList=array2table(sort(pg_ranks),'RowNames',(Countries(Order'))');
+pg_ranksR = centrality(G,'pagerank');
+[~,Order]=sort(pg_ranksR);
+PageRankListReceptor=array2table(sort(pg_ranks),'RowNames',(Countries(Order'))');
 
 % Hub & Authority Algorithms %
 hub_ranks = centrality(G,'hubs');
@@ -184,16 +189,44 @@ auth_ranks = centrality(G,'authorities');
 [~,Order]=sort(auth_ranks);
 AuthorityList=array2table(sort(auth_ranks),'RowNames',(Countries(Order'))');
 
+scatter(hub_ranks,auth_ranks)
+
+[~,Order]=sort(hub_ranks-auth_ranks);
+BowTieListHA=array2table(sort(hub_ranks-auth_ranks),'RowNames',(Countries(Order'))');
+
 G.Nodes.Hubs = hub_ranks;
 G.Nodes.Authorities = auth_ranks;
 
-save PageRankList
+save PageRankListReceptor
 save HubList
 save AuthorityList
-%% Bow-tie structure %%
 
-Core = PublicUseCore(FinalMatrix);
-CoreCountries = Countries(logical(Core'));
+[r,c,v] = find(FinalMatrix');
+AdjacencyL = [r,c,v];
+
+G = digraph(AdjacencyL(:,1),AdjacencyL(:,2),AdjacencyL(:,3));
+G.Nodes.Name=Countries';
+% plot(G)
+
+% PageRank Algorithm %
+pg_ranksT = centrality(G,'pagerank');
+[~,Order]=sort(pg_ranksT);
+PageRankListTransmitter=array2table(sort(pg_ranks),'RowNames',(Countries(Order'))');
+
+[~,Order]=sort(pg_ranksT-pg_ranksR);
+BowTieListPR=array2table(sort(pg_ranksT-pg_ranksR),'RowNames',(Countries(Order'))');
+
+scatter(pg_ranksT,pg_ranksR)
+
+save PageRankListTransmitter
+save BowTieListPR
+save BowTieListHA
+
+save pg_ranksR
+save pg_ranksT
+save hub_ranks
+save auth_ranks
+%% Bow-tie structure %%
 
 % C-Fuzzy Means: %
 s = rng(2)
@@ -205,3 +238,5 @@ Core = Countries(find(U(b(1),:) == maxU));
 Center = Countries(find(U(b(2),:) == maxU));
 Periphery = Countries(find(U(b(3),:) == maxU));
 %% Link Prunning and Bow-tie Extraction %%
+
+Core=PublicUseCore(FinalMatrix);
