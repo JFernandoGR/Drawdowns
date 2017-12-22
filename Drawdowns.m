@@ -1,21 +1,22 @@
 %% Bow-Tie Structure, E-DrawDowns & Vulnerability in the World Stock-Market Network %%
-
 %% Input Lecture: %%
 
-cd('E:\Stock Network')
+cd('C:\Users\Jairo F Gudiño R\Desktop\Stock Network Research')
 [~,~,Database]=xlsread('MSCI Index.xlsx','Data');
 %% Inputs and Parameters Definition: %%
+
 Countries=Database(4,2:end);
 Dates=Database(3538:end,1);
-Database=cell2mat(Database(3538:end,2:end));
-
-DaysWindow = 100;
-Days = size(Database,1);
+DaysWindow = 20;
 CountriesNum=length(Countries);
 n=4;
 r=n+1;
 permutations=100;
 value=95;
+Database=cell2mat(Database(3538:end,2:end));
+
+Days = size(Database,1);
+DatabaseW = Database;
 
 %% Creation of Individual Draw-downs Vectors for each country: %%
 
@@ -23,10 +24,10 @@ Maxima=cell(Days-DaysWindow,CountriesNum);
 Minima=cell(Days-DaysWindow,CountriesNum);
 MaxIdx=cell(Days-DaysWindow,CountriesNum);
 MinIdx=cell(Days-DaysWindow,CountriesNum);
-DrawDowns=zeros(size(Database));
+DrawDowns=zeros(size(DatabaseW));
 
 for d=DaysWindow:Days
-DataWindow=Database(d-DaysWindow+1:d,:);
+DataWindow=DatabaseW(d-DaysWindow+1:d,:);
 for y=1:CountriesNum
 % Local extrema %
 [MaximaX,MaxIdxX] = findpeaks(DataWindow(:,y));
@@ -96,10 +97,9 @@ MatrixOrder=zeros(DrawDays,permutations);
 CountsPermMatrix=zeros(r,CountriesNum,CountriesNum,permutations);
 
 for y=1:permutations
-y
+    
 MatrixOrder(:,y)=(randperm(DrawDays))';
 PermutationMatrix=(DrawDowns(MatrixOrder(:,y),:));
-
 CountsPerm=zeros(r,CountriesNum,CountriesNum,DrawDays-n);
 for d=1:(DrawDays-n)
 DataWindow=PermutationMatrix(d:d+n,:);
@@ -111,6 +111,7 @@ for k=1:r
 N = num2cell(permute(CountsPerm(k,:,:,:),[2:r 1]),3);
 CountsPermMatrix(k,:,:,y)=arrayfun(@(x) sum(x{:}),N)/(DrawDays-n)-IndividualProb;
 end
+
 end
 
 for k=1:r
@@ -118,6 +119,7 @@ N = num2cell(permute(CountsPermMatrix(k,:,:,:),[2 3 4 1]),3);
 N = arrayfun(@(x) permute(x{:},[3 1 2]),N,'UniformOutput',0);
 eval([strcat('CountsX',num2str(k)),'=CountsFirst(:,:,k).*(CountsFirst(:,:,k)>=arrayfun(@(x) prctile(x{:},value),N));'])
 end
+
 %% Interpreting the Conditional Probability Matrix W %%
 
 % Interdependence Matrix and Trend Reinforcement Index %
@@ -150,21 +152,13 @@ TrendReinforceH=array2table(sort(TrendReinforcement),'RowNames',(Countries(Order
 % Density Function: %
 FinalDist=FinalMatrix(logical(FinalMatrix(:)));
 
-% Dates Analysis %
-DrawDowns=array2table(DrawDowns,'RowNames',Dates,'VariableNames',Countries);
-x=table2array(DrawDowns);
-x=array2table(sum(x,2),'RowNames',Dates);
-DrawDowns=table2array(DrawDowns);
+% % Dates Analysis %
+% DrawDowns=array2table(DrawDowns,'RowNames',Dates,'VariableNames',Countries);
+% x=table2array(DrawDowns);
+% x=array2table(sum(x,2),'RowNames',Dates);
+% DrawDowns=table2array(DrawDowns);
 
 clear Order;
-
-save CountsX1
-save CountsX2
-save CountsX3
-save CountsX4
-save CountsX5
-save FinalMatrix
-save DrawDowns
 
 %% Impacting and Impacted Centrality %%
 
@@ -189,17 +183,13 @@ auth_ranks = centrality(G,'authorities');
 [~,Order]=sort(auth_ranks);
 AuthorityList=array2table(sort(auth_ranks),'RowNames',(Countries(Order'))');
 
-scatter(hub_ranks,auth_ranks)
+% scatter(hub_ranks,auth_ranks)
 
 [~,Order]=sort(hub_ranks-auth_ranks);
 BowTieListHA=array2table(sort(hub_ranks-auth_ranks),'RowNames',(Countries(Order'))');
 
 G.Nodes.Hubs = hub_ranks;
 G.Nodes.Authorities = auth_ranks;
-
-save PageRankListReceptor
-save HubList
-save AuthorityList
 
 [r,c,v] = find(FinalMatrix');
 AdjacencyL = [r,c,v];
@@ -216,7 +206,15 @@ PageRankListTransmitter=array2table(sort(pg_ranks),'RowNames',(Countries(Order')
 [~,Order]=sort(pg_ranksT-pg_ranksR);
 BowTieListPR=array2table(sort(pg_ranksT-pg_ranksR),'RowNames',(Countries(Order'))');
 
-scatter(pg_ranksT,pg_ranksR)
+% scatter(pg_ranksT,pg_ranksR)
+
+%% Controllability %%
+
+[Nd,~,~] = ExactControllability(FinalMatrix,'plotting',1);
+% Sólo hay una configuración del driver node.
+% 1 sólo driver node.
+
+%% Save Results %%
 
 save PageRankListTransmitter
 save BowTieListPR
@@ -226,17 +224,31 @@ save pg_ranksR
 save pg_ranksT
 save hub_ranks
 save auth_ranks
-%% Bow-tie structure %%
 
-% C-Fuzzy Means: %
-s = rng(2)
-options = [NaN 25 0.001 0];
-[centers,U] = fcm(NetDegree,3,options);
-[~,b]=sort(centers,'descend');
-maxU = max(U);
-Core = Countries(find(U(b(1),:) == maxU));
-Center = Countries(find(U(b(2),:) == maxU));
-Periphery = Countries(find(U(b(3),:) == maxU));
-%% Link Prunning and Bow-tie Extraction %%
+save PageRankListReceptor
+save HubList
+save AuthorityList
 
-Core=PublicUseCore(FinalMatrix);
+save CountsX1
+save CountsX2
+save CountsX3
+save CountsX4
+save CountsX5
+save FinalMatrix
+save DrawDowns
+
+%% Tiered structure %%
+
+% Core = PublicUseCore(FinalMatrix);
+% CoreCountries = Countries(logical(Core'));
+% PeripheryCountries = Countries(logical(~Core'));
+
+% % C-Fuzzy Means: %
+% s = rng(2)
+% options = [NaN 25 0.001 0];
+% [centers,U] = fcm(NetDegree,3,options);
+% [~,b]=sort(centers,'descend');
+% maxU = max(U);
+% Core = Countries(find(U(b(1),:) == maxU));
+% Center = Countries(find(U(b(2),:) == maxU));
+% Periphery = Countries(find(U(b(3),:) == maxU));
