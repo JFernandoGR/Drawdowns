@@ -1,9 +1,9 @@
-%% Bow-Tie Structure, E-DrawDowns & Vulnerability in the World Stock-Market Network %%
+%% C/P Structure, E-DrawDowns & Vulnerability in the World Stock-Market Network %%
 %% Time-Varying Version %%
 %% Input Lecture: %%
 
-cd('C:\Users\Jairo F Gudiño R\Desktop\Stock Network Research')
-[~,~,Database]=xlsread('MSCI Index.xlsx','Data');
+cd('C:\Users\Jairo F Gudiño R\Desktop\Stock Network Research') %Location of file%
+[~,~,Database]=xlsread('MSCI Index.xlsx','Data'); %Lecture of the file%
 %% Inputs and Parameters Definition: %%
 Countries=Database(4,2:end);
 Dates=Database(3538:end,1);
@@ -99,8 +99,6 @@ end
 CountsPermMatrix=zeros(r,CountriesNum,CountriesNum,permutations);
 
 for y=1:permutations
-
-y
 PermutationMatrix=(DrawDowns((randperm(DrawDays))',:));
 CountsPerm=zeros(r,CountriesNum,CountriesNum,DrawDays-n);
 for d=1:(DrawDays-n)
@@ -140,6 +138,7 @@ NetDegreeT(w,:)=((sum(FinalMatrix,2)-(sum(FinalMatrix,1))'))';
 %% Impacting and Impacted Centrality: Hubs & Authority %%
 
 % Initial values for authority and hub scores of pages:
+t = 1E-3;
 a = ones(CountriesNum, 1) / sqrt(CountriesNum); % Authority score
 k = ones(CountriesNum, 1) / sqrt(CountriesNum); % Hub score
 % Keep list of values for authority and hub scores during the iteration:
@@ -173,12 +172,170 @@ auth_ranksT(w,:) = (a/sum(a))';
 CoreT(w,:)=sum(PublicUseCore(FinalMatrix));
 end
 
-save('FinalMatrixT','FinalMatrixT')
-save('TrendReinforcementT','TrendReinforcementT')
-save('InDegreeT','InDegreeT')
-save('OutDegreeT','OutDegreeT')
-save('NetDegreeT','NetDegreeT')
-save('hub_ranksT','hub_ranksT')
-save('auth_ranksT','auth_ranksT')
-save('CoreT','CoreT')
-save('NdT','NdT')
+%% Printing of matrices %%
+
+% save('FinalMatrixT','FinalMatrixT')
+% save('TrendReinforcementT','TrendReinforcementT')
+% save('InDegreeT','InDegreeT')
+% save('OutDegreeT','OutDegreeT')
+% save('NetDegreeT','NetDegreeT')
+% save('hub_ranksT','hub_ranksT')
+% save('auth_ranksT','auth_ranksT')
+% save('CoreT','CoreT')
+% save('NdT','NdT')
+
+%% Graphics %%
+DatesN=Dates(windowL+1:end);
+%% From/To Impacts in Different Countries %%
+
+c=37; %Origin Country
+d=2; %Target Country
+
+Impacted=zeros(size(Database,1)-windowL,CountriesNum);
+Impacting=zeros(size(Database,1)-windowL,CountriesNum);
+for w=1:(size(Database,1)-windowL)
+Impacting(w,:) = FinalMatrixT(c,:,w); %From other countries:
+Impacted(w,:) = FinalMatrixT(:,c,w); %Toward other countries:
+end
+
+graymon
+figure()
+plot(datenum(DatesN,'dd/mm/yyyy'),Impacted(:,d),'Color',[30/255,144/255,255/255],'LineWidth',2)
+ylabel('In-Degree')
+DatesInit=datenum(DatesN(1),'dd/mm/yyyy');
+DatesEnd=datenum(DatesN(end),'dd/mm/yyyy');
+dt=(DatesEnd-DatesInit)/10;
+set(gca,'xtick',DatesInit:dt:DatesEnd);
+set(gca,'xticklabel',datestr(round(DatesInit:dt:DatesEnd),'mmm/YY'));
+set(gca,'FontSize',14)
+set(gca,'XLim',[datenum(DatesN(1,:),'dd/mm/yyyy') datenum(DatesN(end,:),'dd/mm/yyyy')])
+h=gcf;
+set(h,'PaperOrientation','landscape');
+set(h,'PaperUnits','normalized');
+set(h,'PaperPosition',[0 0 1 1]);
+title('Vulnerability Analysis')
+
+graymon
+figure()
+plot(datenum(DatesN,'dd/mm/yyyy'),Impacting(:,c),'Color',[30/255,144/255,255/255],'LineWidth',2)
+ylabel('Out-Degree')
+DatesInit=datenum(DatesN(1),'dd/mm/yyyy');
+DatesEnd=datenum(DatesN(end),'dd/mm/yyyy');
+dt=(DatesEnd-DatesInit)/10;
+set(gca,'xtick',DatesInit:dt:DatesEnd);
+set(gca,'xticklabel',datestr(round(DatesInit:dt:DatesEnd),'mmm/YY'));
+set(gca,'FontSize',14)
+set(gca,'XLim',[datenum(DatesN(1,:),'dd/mm/yyyy') datenum(DatesN(end,:),'dd/mm/yyyy')])
+h=gcf;
+set(h,'PaperOrientation','landscape');
+set(h,'PaperUnits','normalized');
+set(h,'PaperPosition',[0 0 1 1]);
+title('Vulnerability Analysis')
+
+graymon
+figure()
+plot(datenum(DatesN,'dd/mm/yyyy'),auth_ranksT(:,c),'Color',[30/255,144/255,255/255],'LineWidth',2)
+ylabel('Authority')
+DatesInit=datenum(DatesN(1),'dd/mm/yyyy');
+DatesEnd=datenum(DatesN(end),'dd/mm/yyyy');
+dt=(DatesEnd-DatesInit)/10;
+set(gca,'xtick',DatesInit:dt:DatesEnd);
+set(gca,'xticklabel',datestr(round(DatesInit:dt:DatesEnd),'mmm/YY'));
+set(gca,'FontSize',14)
+set(gca,'XLim',[datenum(DatesN(1,:),'dd/mm/yyyy') datenum(DatesN(end,:),'dd/mm/yyyy')])
+h=gcf;
+set(h,'PaperOrientation','landscape');
+set(h,'PaperUnits','normalized');
+set(h,'PaperPosition',[0 0 1 1]);
+title('Vulnerability Analysis')
+
+graymon
+figure()
+plot(datenum(DatesN,'dd/mm/yyyy'),hub_ranksT(:,c),'Color',[30/255,144/255,255/255],'LineWidth',2)
+ylabel('Hub')
+DatesInit=datenum(DatesN(1),'dd/mm/yyyy');
+DatesEnd=datenum(DatesN(end),'dd/mm/yyyy');
+dt=(DatesEnd-DatesInit)/10;
+set(gca,'xtick',DatesInit:dt:DatesEnd);
+set(gca,'xticklabel',datestr(round(DatesInit:dt:DatesEnd),'mmm/YY'));
+set(gca,'FontSize',14)
+set(gca,'XLim',[datenum(DatesN(1,:),'dd/mm/yyyy') datenum(DatesN(end,:),'dd/mm/yyyy')])
+h=gcf;
+set(h,'PaperOrientation','landscape');
+set(h,'PaperUnits','normalized');
+set(h,'PaperPosition',[0 0 1 1]);
+title('Vulnerability Analysis')
+
+%% Regional Analysis %%
+
+Europe=[5,6,7,10,12,13,16,17,21,23,27,28,31,33:35,38:41,47,52:57,59,62];
+Africa=[22,30,42,49,50];
+NorthAmerica=[15,25];
+Asia=[3,4,8,11,14,18,19,20,24,26,36,43,44,46,48,51,58,60,61,63:65];
+Oceania=[9 32];
+SouthAmerica=[1,2,7,29,37,45];
+
+hub_all=[sum(hub_ranksT(:,Europe),2)/numel(Europe),sum(hub_ranksT(:,Asia),2)/numel(Asia),...
+    sum(hub_ranksT(:,SouthAmerica),2)/numel(SouthAmerica),sum(hub_ranksT(:,NorthAmerica),2)/numel(NorthAmerica),...
+    sum(hub_ranksT(:,Oceania),2)/numel(Oceania),sum(hub_ranksT(:,Africa),2)/numel(Africa)];
+graymon
+figure()
+plot(datenum(DatesN,'dd/mm/yyyy'),hub_all,'LineWidth',2)
+ylabel('Hub (by continent)')
+DatesInit=datenum(DatesN(1),'dd/mm/yyyy');
+DatesEnd=datenum(DatesN(end),'dd/mm/yyyy');
+dt=(DatesEnd-DatesInit)/10;
+set(gca,'xtick',DatesInit:dt:DatesEnd);
+set(gca,'xticklabel',datestr(round(DatesInit:dt:DatesEnd),'mmm/YY'));
+set(gca,'FontSize',14)
+set(gca,'XLim',[datenum(DatesN(1,:),'dd/mm/yyyy') datenum(DatesN(end,:),'dd/mm/yyyy')])
+h=gcf;
+set(h,'PaperOrientation','landscape');
+set(h,'PaperUnits','normalized');
+set(h,'PaperPosition',[0 0 1 1]);
+title('Vulnerability Analysis')
+
+
+auth_all=[sum(auth_ranksT(:,Europe),2)/numel(Europe),sum(auth_ranksT(:,Asia),2)/numel(Asia),...
+    sum(auth_ranksT(:,SouthAmerica),2)/numel(SouthAmerica),sum(auth_ranksT(:,NorthAmerica),2)/numel(NorthAmerica),...
+    sum(auth_ranksT(:,Oceania),2)/numel(Oceania),sum(auth_ranksT(:,Africa),2)/numel(Africa)];
+graymon
+figure()
+plot(datenum(DatesN,'dd/mm/yyyy'),auth_all,'LineWidth',2)
+ylabel('Authority (by continent)')
+DatesInit=datenum(DatesN(1),'dd/mm/yyyy');
+DatesEnd=datenum(DatesN(end),'dd/mm/yyyy');
+dt=(DatesEnd-DatesInit)/10;
+set(gca,'xtick',DatesInit:dt:DatesEnd);
+set(gca,'xticklabel',datestr(round(DatesInit:dt:DatesEnd),'mmm/YY'));
+set(gca,'FontSize',14)
+set(gca,'XLim',[datenum(DatesN(1,:),'dd/mm/yyyy') datenum(DatesN(end,:),'dd/mm/yyyy')])
+h=gcf;
+set(h,'PaperOrientation','landscape');
+set(h,'PaperUnits','normalized');
+set(h,'PaperPosition',[0 0 1 1]);
+title('Vulnerability Analysis')
+
+%% Skewness Analysis %%
+
+graymon
+figure()
+plot(datenum(DatesN,'dd/mm/yyyy'),skewness(TrendReinforcementT')','Color',[30/255,144/255,255/255],'LineWidth',2)
+ylabel('Skewness')
+DatesInit=datenum(DatesN(1),'dd/mm/yyyy');
+DatesEnd=datenum(DatesN(end),'dd/mm/yyyy');
+dt=(DatesEnd-DatesInit)/10;
+set(gca,'xtick',DatesInit:dt:DatesEnd);
+set(gca,'xticklabel',datestr(round(DatesInit:dt:DatesEnd),'mmm/YY'));
+set(gca,'FontSize',14)
+set(gca,'XLim',[datenum(DatesN(1,:),'dd/mm/yyyy') datenum(DatesN(end,:),'dd/mm/yyyy')])
+h=gcf;
+set(h,'PaperOrientation','landscape');
+set(h,'PaperUnits','normalized');
+set(h,'PaperPosition',[0 0 1 1]);
+title('Trend Reinforcement - Skewness')
+
+auth_ranksTSk = skewness(auth_ranksT')';
+hub_ranksTSk = skewness(hub_ranksT')';
+
+%% End of the Code %%
